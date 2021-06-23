@@ -18,6 +18,7 @@ namespace Gamekit2D
         {
             NewSceneCreator window = GetWindow<NewSceneCreator> ();
             window.Show();
+            window.m_NewSceneName = "NewScene";
         }
 
         void OnGUI ()
@@ -33,6 +34,12 @@ namespace Gamekit2D
             if (EditorApplication.isPlaying)
             {
                 Debug.LogWarning ("Cannot create scenes while in play mode.  Exit play mode first.");
+                return;
+            }
+
+            if (string.IsNullOrEmpty (m_NewSceneName))
+            {
+                Debug.LogWarning ("Please enter a scene name before creating a scene.");
                 return;
             }
 

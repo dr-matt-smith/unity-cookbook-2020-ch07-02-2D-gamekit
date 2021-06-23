@@ -91,8 +91,17 @@ namespace Gamekit2D
             RecomputeMesh();
             SetSortingLayer();
 
-            m_Bubbles.Play();
-            m_Steam.Play();
+#if UNITY_EDITOR
+            if (Application.isPlaying)
+            {
+                //we don't want to do it in editor when not playing as it would leak object
+#endif
+                m_Bubbles.Play();
+                m_Steam.Play();
+#if UNITY_EDITOR
+            }
+#endif
+                
 
             meshVertices = m_Mesh.vertices;
         }
@@ -160,8 +169,16 @@ namespace Gamekit2D
             bubblesLocalPosition = offset + Vector2.down * size.y * 0.5f;
             m_Bubbles.transform.localPosition = bubblesLocalPosition;
 
-            m_Steam.Simulate(0.1f);
-            m_Bubbles.Simulate(0.1f);
+#if UNITY_EDITOR
+            if (Application.isPlaying)
+            {
+                //we don't want to do it in editor when not playing as it would leak object
+#endif
+                m_Steam.Simulate(0.1f);
+                m_Bubbles.Simulate(0.1f);
+#if UNITY_EDITOR
+            }
+#endif
 
             m_Damager.size = size;
             m_Damager.offset = offset;

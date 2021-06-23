@@ -129,6 +129,14 @@ namespace Gamekit2D
         {
             m_CurrentHealth = amount;
 
+            if (m_CurrentHealth <= 0)
+            {
+                OnDie.Invoke(null, this);
+                m_ResetHealthOnSceneReload = true;
+                EnableInvulnerability();
+                if (disableOnDeath) gameObject.SetActive(false);
+            }
+
             OnHealthSet.Invoke(this);
         }
 

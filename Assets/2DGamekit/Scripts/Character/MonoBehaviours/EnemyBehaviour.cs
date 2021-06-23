@@ -50,9 +50,6 @@ namespace Gamekit2D
         [Header("Range Attack Data")]
         [Tooltip("From where the projectile are spawned")]
         public Transform shootingOrigin;
-        public float shootAngle = 45.0f;
-        public float shootForce = 100.0f;
-        public float fireRate = 2.0f;
 
         [Header("Audio")]
         public RandomAudioPlayer shootingAudio;
@@ -370,15 +367,11 @@ namespace Gamekit2D
             m_Animator.SetTrigger(m_HashShootingPara);
             shootingAudio.PlayRandomSound();
 
-            m_FireTimer = fireRate;
+            m_FireTimer = 1.0f;
         }
 
         public void Shooting()
         {
-            Vector2 force = m_SpriteForward.x > 0 ? Vector2.right.Rotate(shootAngle) : Vector2.left.Rotate(-shootAngle);
-
-            force *= shootForce;
-
             Vector2 shootPosition = shootingOrigin.transform.localPosition;
 
             //if we are flipped compared to normal, we need to localy flip the shootposition too

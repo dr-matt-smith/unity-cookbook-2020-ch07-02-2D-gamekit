@@ -33,7 +33,13 @@ namespace Gamekit2D
             {
                 string path = scenes[i].path;
                 string[] splitPath = path.Split(k_ScenePathSplitters, StringSplitOptions.RemoveEmptyEntries);
-                m_SceneNames[i] = new GUIContent(splitPath[splitPath.Length - 1]);
+
+                string sceneName = "";
+                if (splitPath.Length > 0)
+                    sceneName = splitPath[splitPath.Length - 1];
+                else
+                    sceneName = "(Deleted Scene)";
+                m_SceneNames[i] = new GUIContent(sceneName);
             }
 
             if (m_SceneNames.Length == 0)

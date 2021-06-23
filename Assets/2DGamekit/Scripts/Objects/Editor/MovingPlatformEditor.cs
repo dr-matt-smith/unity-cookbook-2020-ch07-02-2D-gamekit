@@ -10,6 +10,14 @@ namespace Gamekit2D
     {
         MovingPlatform m_MovingPlatform;
 
+        private SerializedProperty m_PlatformCatcherProperty;
+        private SerializedProperty m_IsMovingAtStartProperty;
+        private SerializedProperty m_StartMovingOnlyWhenVisibleProperty;
+        private SerializedProperty m_PlatformTypeProperty;
+        private SerializedProperty m_PlatformSpeedProperty;
+        private SerializedProperty m_PlatformNodesProperty;
+        private SerializedProperty m_PlatformWaitTimeProperty;
+
         float m_PreviewPosition = 0;
 
         private void OnEnable()
@@ -19,6 +27,14 @@ namespace Gamekit2D
 
             if(!EditorApplication.isPlayingOrWillChangePlaymode)
                 MovingPlatformPreview.CreateNewPreview(m_MovingPlatform);
+
+            m_PlatformCatcherProperty = serializedObject.FindProperty(nameof(m_MovingPlatform.platformCatcher));
+            m_IsMovingAtStartProperty = serializedObject.FindProperty(nameof(m_MovingPlatform.isMovingAtStart));
+            m_StartMovingOnlyWhenVisibleProperty = serializedObject.FindProperty(nameof(m_MovingPlatform.startMovingOnlyWhenVisible));
+            m_PlatformTypeProperty = serializedObject.FindProperty(nameof(m_MovingPlatform.platformType));
+            m_PlatformSpeedProperty = serializedObject.FindProperty(nameof(m_MovingPlatform.speed));
+            m_PlatformNodesProperty = serializedObject.FindProperty(nameof(m_MovingPlatform.localNodes));
+            m_PlatformWaitTimeProperty = serializedObject.FindProperty(nameof(m_MovingPlatform.waitTimes));
         }
 
         private void OnDisable()
@@ -28,10 +44,9 @@ namespace Gamekit2D
 
         public override void OnInspectorGUI()
         {
-            EditorGUI.BeginChangeCheck();
-            m_MovingPlatform.platformCatcher = EditorGUILayout.ObjectField("Platform Catcher", m_MovingPlatform.platformCatcher, typeof(PlatformCatcher), true) as PlatformCatcher;
-            if (EditorGUI.EndChangeCheck())
-                Undo.RecordObject(target, "Changed Catcher");
+            serializedObject.Update();
+
+            EditorGUILayout.PropertyField(m_PlatformCatcherProperty);
 
             EditorGUI.BeginChangeCheck();
             m_PreviewPosition = EditorGUILayout.Slider("Preview position", m_PreviewPosition, 0.0f, 1.0f);
@@ -44,43 +59,18 @@ namespace Gamekit2D
             EditorGUILayout.Separator();
 
             EditorGUILayout.BeginVertical("box");
-            EditorGUI.BeginChangeCheck();
-            bool isStartingMoving = EditorGUILayout.Toggle("Start moving", m_MovingPlatform.isMovingAtStart);
-            if (EditorGUI.EndChangeCheck())
-            {
-                Undo.RecordObject(target, "Changed move at start");
-                m_MovingPlatform.isMovingAtStart = isStartingMoving;
-            }
+            EditorGUILayout.PropertyField(m_IsMovingAtStartProperty);
 
-            if(isStartingMoving)
+            if(m_IsMovingAtStartProperty.boolValue)
             {
                 EditorGUI.indentLevel += 1;
-                EditorGUI.BeginChangeCheck();
-                bool startOnlyWhenVisible = EditorGUILayout.Toggle("When becoming visible", m_MovingPlatform.startMovingOnlyWhenVisible);
-                if (EditorGUI.EndChangeCheck())
-                {
-                    Undo.RecordObject(target, "Changed move when visible");
-                    m_MovingPlatform.startMovingOnlyWhenVisible = startOnlyWhenVisible;
-                }
+                EditorGUILayout.PropertyField(m_StartMovingOnlyWhenVisibleProperty);
                 EditorGUI.indentLevel -= 1;
             }
             EditorGUILayout.EndVertical();
 
-            EditorGUI.BeginChangeCheck();
-            MovingPlatform.MovingPlatformType platformType = (MovingPlatform.MovingPlatformType)EditorGUILayout.EnumPopup("Looping", m_MovingPlatform.platformType);
-            if (EditorGUI.EndChangeCheck())
-            {
-                Undo.RecordObject(target, "Changed Moving Platform type");
-                m_MovingPlatform.platformType = platformType;
-            }
-
-            EditorGUI.BeginChangeCheck();
-            float newSpeed = EditorGUILayout.FloatField("Speed", m_MovingPlatform.speed);
-            if (EditorGUI.EndChangeCheck())
-            {
-                Undo.RecordObject(target, "Changed Speed");
-                m_MovingPlatform.speed = newSpeed;
-            }
+            EditorGUILayout.PropertyField(m_PlatformTypeProperty);
+            EditorGUILayout.PropertyField(m_PlatformSpeedProperty);
 
             EditorGUILayout.Separator();
             EditorGUILayout.Separator();
@@ -92,8 +82,12 @@ namespace Gamekit2D
             
                 Vector3 position = m_MovingPlatform.localNodes[m_MovingPlatform.localNodes.Length - 1] + Vector3.right;
 
-                ArrayUtility.Add(ref m_MovingPlatform.localNodes, position);
-                ArrayUtility.Add(ref m_MovingPlatform.waitTimes, 0);
+                int index = m_PlatformNodesProperty.arraySize;
+                m_PlatformNodesProperty.InsertArrayElementAtIndex(index);
+                m_PlatformNodesProperty.GetArrayElementAtIndex(index).vector3Value = position;
+                
+                m_PlatformWaitTimeProperty.InsertArrayElementAtIndex(index);
+                m_PlatformWaitTimeProperty.GetArrayElementAtIndex(index).floatValue = 0;
             }
 
             EditorGUIUtility.labelWidth = 64;
@@ -114,34 +108,26 @@ namespace Gamekit2D
                 EditorGUILayout.EndVertical();
 
                 EditorGUILayout.BeginVertical();
-                Vector3 newPosition;
-                if (i == 0)
-                    newPosition = m_MovingPlatform.localNodes[i];
-                else
-                    newPosition = EditorGUILayout.Vector3Field("Position", m_MovingPlatform.localNodes[i]);
 
-                float newTime = EditorGUILayout.FloatField("Wait Time", m_MovingPlatform.waitTimes[i]);
-                EditorGUILayout.EndVertical();
-
-
-                EditorGUILayout.EndHorizontal();
-
-                if (EditorGUI.EndChangeCheck())
+                if (i != 0)
                 {
-                    Undo.RecordObject(target, "changed time or position");
-                    m_MovingPlatform.waitTimes[i] = newTime;
-                    m_MovingPlatform.localNodes[i] = newPosition;
+                    EditorGUILayout.PropertyField(m_PlatformNodesProperty.GetArrayElementAtIndex(i), new GUIContent("Pos"));
+                    EditorGUILayout.PropertyField(m_PlatformWaitTimeProperty.GetArrayElementAtIndex(i), new GUIContent("Wait Time"));
                 }
+                
+                EditorGUILayout.EndVertical();
+                EditorGUILayout.EndHorizontal();
+                
             }
             EditorGUIUtility.labelWidth = 0;
 
             if (delete != -1)
             {
-                Undo.RecordObject(target, "Removed point moving platform");
-
-                ArrayUtility.RemoveAt(ref m_MovingPlatform.localNodes, delete);
-                ArrayUtility.RemoveAt(ref m_MovingPlatform.waitTimes, delete);
+                m_PlatformNodesProperty.DeleteArrayElementAtIndex(delete);
+                m_PlatformWaitTimeProperty.DeleteArrayElementAtIndex(delete);
             }
+
+            serializedObject.ApplyModifiedProperties();
         }
 
         private void OnSceneGUI()
@@ -195,7 +181,9 @@ namespace Gamekit2D
                     if (worldPos != newWorld)
                     {
                         Undo.RecordObject(target, "moved point");
-                        m_MovingPlatform.localNodes[i] = m_MovingPlatform.transform.InverseTransformPoint(newWorld);
+                        
+                        m_PlatformNodesProperty.GetArrayElementAtIndex(i).vector3Value = m_MovingPlatform.transform.InverseTransformPoint(newWorld);
+                        serializedObject.ApplyModifiedProperties();
                     }
                 }
             }

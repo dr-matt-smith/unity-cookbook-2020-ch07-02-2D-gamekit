@@ -67,7 +67,7 @@ namespace Gamekit2D
             while (m_CurrentSpawnedEnemyCount < concurrentEnemiesToBeSpawned && m_TotalSpawnedEnemyCount < totalEnemiesToBeSpawned)
             {
                 yield return m_SpawnWait;
-                Pop(transform.position);
+                Pop(transform.position + transform.right * Random.Range(-spawnArea * 0.5f, spawnArea * 0.5f));
                 m_CurrentSpawnedEnemyCount++;
                 m_TotalSpawnedEnemyCount++;
             }
